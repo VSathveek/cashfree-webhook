@@ -7,17 +7,18 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 
-const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+const base64ServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-if (!rawServiceAccount) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT is missing");
+if (!base64ServiceAccount) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is missing");
 }
 
 let serviceAccount;
 try {
-  serviceAccount = JSON.parse(rawServiceAccount);
+  const jsonString = Buffer.from(base64ServiceAccount, "base64").toString("utf8");
+  serviceAccount = JSON.parse(jsonString);
 } catch (err) {
-  console.error("Invalid JSON in FIREBASE_SERVICE_ACCOUNT");
+  console.error("❌ Invalid base64 or JSON in FIREBASE_SERVICE_ACCOUNT:", err);
   process.exit(1);
 }
 
@@ -28,6 +29,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+
 
 app.post("/webhook", async (req, res) => {
   console.log("🔔 Webhook received at /webhook");
