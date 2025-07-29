@@ -27,6 +27,9 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(serviceAccount),
   });
 }
+console.log("🔥 Firebase service account initialized for project:", serviceAccount.project_id);
+console.log("🔑 Email:", serviceAccount.client_email);
+console.log("🔐 Key preview:", serviceAccount.private_key?.substring(0, 30));
 
 const db = admin.firestore();
 
