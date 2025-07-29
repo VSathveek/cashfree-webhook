@@ -7,26 +7,23 @@ dotenv.config();
 const app = express();
 app.use(bodyParser.json());
 
-const base64ServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-if (!base64ServiceAccount) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is missing");
+const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+if (!rawServiceAccount) {
+  throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env");
 }
 
 let serviceAccount;
 try {
-  const jsonString = Buffer.from(base64ServiceAccount, "base64").toString("utf8");
-  serviceAccount = JSON.parse(jsonString);
+  serviceAccount = JSON.parse(Buffer.from(rawServiceAccount, "base64").toString("utf-8"));
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n'); // 🔥 CRUCIAL LINE
 } catch (err) {
-  console.error("❌ Invalid base64 or JSON in FIREBASE_SERVICE_ACCOUNT:", err);
+  console.error("Invalid JSON in FIREBASE_SERVICE_ACCOUNT", err);
   process.exit(1);
 }
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 console.log("🔥 Firebase service account initialized for project:", serviceAccount.project_id);
 console.log("🔑 Email:", serviceAccount.client_email);
 console.log("🔐 Key preview:", serviceAccount.private_key?.substring(0, 30));
